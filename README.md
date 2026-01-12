@@ -1,6 +1,10 @@
 # 🎮 DiabloGrudge Multiplayer Server
 
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FMolochDaGod%2FDiabloGrudge-Server&env=ADMIN_KEY&envDescription=Admin%20key%20for%20accessing%20admin%20panel&envLink=https%3A%2F%2Fgithub.com%2FMolochDaGod%2FDiabloGrudge-Server%23admin-panel&project-name=diablogrudge-server&repository-name=diablogrudge-server)
+
 A web-based multiplayer lobby and launcher for Diablo 2 with hero selection, game rooms, chat, and admin controls.
+
+**🔗 Repository:** https://github.com/MolochDaGod/DiabloGrudge-Server
 
 ## 🚀 Features
 
