@@ -1,0 +1,22 @@
+{
+  "name": "diablogrudge-server",
+  "version": "1.0.0",
+  "description": "Diablo 2 Multiplayer Lobby & Game Server",
+  "type": "module",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0",
+    "express": "^4.21.2",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {},
+  "keywords": ["diablo", "multiplayer", "game-server"],
+  "author": "DiabloGrudge Admin",
+  "license": "MIT"
+}
