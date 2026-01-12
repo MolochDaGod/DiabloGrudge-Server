@@ -38,25 +38,16 @@ const gameState = {
   bannedIPs: new Set(),
 };
 
-// Start HTTP server only if not in Vercel
-let server;
-let wss;
+// Start HTTP server
+const server = app.listen(PORT, () => {
+  console.log(`🎮 DiabloGrudge Server running on port ${PORT}`);
+  console.log(`🔑 Admin key: ${gameState.adminKey}`);
+});
 
-if (process.env.VERCEL !== '1') {
-  server = app.listen(PORT, () => {
-    console.log(`🎮 DiabloGrudge Server running on port ${PORT}`);
-    console.log(`🔑 Admin key: ${gameState.adminKey}`);
-  });
+// WebSocket server
+const wss = new WebSocketServer({ server });
 
-  // WebSocket server
-  wss = new WebSocketServer({ server });
-} else {
-  // For Vercel, we'll handle WebSocket differently
-  console.log('Running in Vercel serverless mode');
-}
-
-if (wss) {
-  wss.on('connection', (ws, req) => {
+wss.on('connection', (ws, req) => {
     const clientIP = req.socket.remoteAddress;
     
     if (gameState.bannedIPs.has(clientIP)) {
@@ -85,7 +76,6 @@ if (wss) {
       serverTime: Date.now()
     }));
   });
-}
 
 function handleMessage(ws, playerId, msg, clientIP) {
   switch (msg.type) {
@@ -373,6 +363,3 @@ app.get('/api/games', (req, res) => {
   const games = Array.from(gameState.games.values()).map(g => getPublicGameInfo(g.id));
   res.json({ games });
 });
-
-// Export for Vercel serverless
-export default app;
