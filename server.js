@@ -18,8 +18,9 @@ app.use((req, res, next) => {
     "script-src 'self' 'unsafe-inline'; " +
     "style-src 'self' 'unsafe-inline'; " +
     "img-src 'self' data: https:; " +
+    "media-src 'self' data: blob:; " +
     "font-src 'self'; " +
-    "connect-src 'self' ws: wss:; " +
+    "connect-src 'self' ws: wss: https:; " +
     "frame-ancestors 'none'"
   );
   next();
@@ -37,44 +38,54 @@ const gameState = {
   bannedIPs: new Set(),
 };
 
-// Start HTTP server
-const server = app.listen(PORT, () => {
-  console.log(`🎮 DiabloGrudge Server running on port ${PORT}`);
-  console.log(`🔑 Admin key: ${gameState.adminKey}`);
-});
+// Start HTTP server only if not in Vercel
+let server;
+let wss;
 
-// WebSocket server
-const wss = new WebSocketServer({ server });
+if (process.env.VERCEL !== '1') {
+  server = app.listen(PORT, () => {
+    console.log(`🎮 DiabloGrudge Server running on port ${PORT}`);
+    console.log(`🔑 Admin key: ${gameState.adminKey}`);
+  });
 
-wss.on('connection', (ws, req) => {
-  const clientIP = req.socket.remoteAddress;
-  
-  if (gameState.bannedIPs.has(clientIP)) {
-    ws.close(1008, 'Banned');
-    return;
-  }
+  // WebSocket server
+  wss = new WebSocketServer({ server });
+} else {
+  // For Vercel, we'll handle WebSocket differently
+  console.log('Running in Vercel serverless mode');
+}
 
-  const playerId = generateId();
-  
-  ws.on('message', (data) => {
-    try {
-      const msg = JSON.parse(data.toString());
-      handleMessage(ws, playerId, msg, clientIP);
-    } catch (err) {
-      console.error('Message error:', err);
+if (wss) {
+  wss.on('connection', (ws, req) => {
+    const clientIP = req.socket.remoteAddress;
+    
+    if (gameState.bannedIPs.has(clientIP)) {
+      ws.close(1008, 'Banned');
+      return;
     }
-  });
 
-  ws.on('close', () => {
-    handleDisconnect(playerId);
-  });
+    const playerId = generateId();
+    
+    ws.on('message', (data) => {
+      try {
+        const msg = JSON.parse(data.toString());
+        handleMessage(ws, playerId, msg, clientIP);
+      } catch (err) {
+        console.error('Message error:', err);
+      }
+    });
 
-  ws.send(JSON.stringify({ 
-    type: 'connected', 
-    playerId,
-    serverTime: Date.now()
-  }));
-});
+    ws.on('close', () => {
+      handleDisconnect(playerId);
+    });
+
+    ws.send(JSON.stringify({ 
+      type: 'connected', 
+      playerId,
+      serverTime: Date.now()
+    }));
+  });
+}
 
 function handleMessage(ws, playerId, msg, clientIP) {
   switch (msg.type) {
@@ -343,6 +354,11 @@ function generateId() {
   return Math.random().toString(36).substr(2, 9);
 }
 
+// Root route - serve index.html
+app.get('/', (req, res) => {
+  res.sendFile(join(__dirname, 'public', 'index.html'));
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ 
@@ -357,3 +373,6 @@ app.get('/api/games', (req, res) => {
   const games = Array.from(gameState.games.values()).map(g => getPublicGameInfo(g.id));
   res.json({ games });
 });
+
+// Export for Vercel serverless
+export default app;
