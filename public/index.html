@@ -861,12 +861,36 @@
                 return;
             }
 
+            if (!currentGameId) {
+                alert('Create or join a game first!');
+                return;
+            }
+
             localStorage.setItem('diablogrudge_active_hero', JSON.stringify(selectedHero));
             
-            // Launch DiabloWeb
-            window.open('https://d07riv.github.io/diabloweb/', '_blank');
+            // Show connection instructions
+            const instructions = `
+🎮 LAUNCH DIABLO 2:
+
+1. Open Cactus and launch your D2 version
+2. In D2: Click "Multiplayer" → "TCP/IP Game"
+3. Host: Click "Host Game" (other players join)
+4. Join: Enter host's IP address
+
+💡 To find your IP:
+   - Open Command Prompt (cmd)
+   - Type: ipconfig
+   - Look for "IPv4 Address"
+
+🌐 For online play:
+   - Host needs to port forward: 4000 (TCP/UDP)
+   - Or use: Hamachi / ZeroTier / Radmin VPN
+
+✅ Ready to play!
+            `;
             
-            addChatMessage('System', 'Game launched! Use TCP/IP to connect with other players.');
+            alert(instructions);
+            addChatMessage('System', 'Connection instructions displayed. Launch D2 via Cactus!');
         }
 
         // Utils
