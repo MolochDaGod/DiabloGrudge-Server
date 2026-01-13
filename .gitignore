@@ -3,3 +3,13 @@ node_modules/
 .vercel
 *.log
 .DS_Store
+
+# Large game files (don't deploy to GitHub)
+Disotheb/
+Disotheb_Patch_1/
+public/TSW_3.50.rar
+*.mpq
+*.7z
+*.rar
+*.d2s
+Saves/
