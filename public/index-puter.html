@@ -440,7 +440,8 @@
                 }
 
                 // Authenticate with backend
-                const response = await fetch('/api/auth/puter', {
+                const API_BASE = 'https://diablo-grudge-server-1nx20awk2-grudgenexus.vercel.app';
+                const response = await fetch(`${API_BASE}/api/auth/puter`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -477,8 +478,9 @@
 
         // Load user's characters
         async function loadCharacters() {
+            const API_BASE = 'https://diablo-grudge-server-1nx20awk2-grudgenexus.vercel.app';
             try {
-                const response = await fetch(`/api/characters/${currentUser.id}`);
+                const response = await fetch(`${API_BASE}/api/characters/${currentUser.id}`);
                 const data = await response.json();
 
                 const container = document.getElementById('charactersContainer');
@@ -595,8 +597,9 @@
                 return;
             }
 
+            const API_BASE = 'https://diablo-grudge-server-1nx20awk2-grudgenexus.vercel.app';
             try {
-                const response = await fetch('/api/characters/create', {
+                const response = await fetch(`${API_BASE}/api/characters/create`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -632,8 +635,9 @@
                 return;
             }
 
+            const API_BASE = 'https://diablo-grudge-server-1nx20awk2-grudgenexus.vercel.app';
             try {
-                const response = await fetch(`/api/characters/${currentUser.id}/${name}`, {
+                const response = await fetch(`${API_BASE}/api/characters/${currentUser.id}/${name}`, {
                     method: 'DELETE'
                 });
 
@@ -660,8 +664,9 @@
                 return;
             }
 
+            const API_BASE = 'https://diablo-grudge-server-1nx20awk2-grudgenexus.vercel.app';
             try {
-                const response = await fetch('/api/launch-game', {
+                const response = await fetch(`${API_BASE}/api/launch-game`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
