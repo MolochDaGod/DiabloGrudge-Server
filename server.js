@@ -3,6 +3,13 @@ import { WebSocketServer } from 'ws';
 import cors from 'cors';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+import os from 'os';
+import D2CharacterManager from './d2-character-manager.js';
+
+const execAsync = promisify(exec);
+const charManager = new D2CharacterManager();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -15,12 +22,12 @@ app.use((req, res, next) => {
   res.setHeader(
     'Content-Security-Policy',
     "default-src 'self'; " +
-    "script-src 'self' 'unsafe-inline'; " +
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
     "style-src 'self' 'unsafe-inline'; " +
     "img-src 'self' data: https:; " +
     "media-src 'self' data: blob:; " +
-    "font-src 'self'; " +
-    "connect-src 'self' ws: wss: https:; " +
+    "font-src 'self' data:; " +
+    "connect-src 'self' ws: wss: http: https:; " +
     "frame-ancestors 'none'"
   );
   next();
@@ -29,6 +36,205 @@ app.use((req, res, next) => {
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
+
+// Favicon route
+app.get('/favicon.ico', (req, res) => {
+  res.redirect('/favicon.svg');
+});
+
+// API Routes
+
+// ZeroTier status check
+app.get('/api/zerotier/status', async (req, res) => {
+  try {
+    if (os.platform() !== 'win32') {
+      return res.json({ connected: false, error: 'Only Windows supported' });
+    }
+
+    // Get ZeroTier IP from ipconfig
+    const { stdout } = await execAsync('ipconfig');
+    
+    // Find ZeroTier adapter
+    const lines = stdout.split('\n');
+    let inZeroTier = false;
+    let ztIP = null;
+    
+    for (const line of lines) {
+      if (line.includes('ZeroTier')) {
+        inZeroTier = true;
+      }
+      if (inZeroTier && line.includes('IPv4 Address')) {
+        const match = line.match(/([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})/);
+        if (match) {
+          ztIP = match[1];
+          break;
+        }
+      }
+    }
+
+    if (ztIP) {
+      res.json({
+        connected: true,
+        ip: ztIP,
+        uptime: 'Active'
+      });
+    } else {
+      res.json({
+        connected: false,
+        error: 'ZeroTier adapter not found or not connected'
+      });
+    }
+  } catch (error) {
+    res.json({
+      connected: false,
+      error: error.message
+    });
+  }
+});
+
+// Launch game endpoint
+app.post('/api/launch-game', async (req, res) => {
+  try {
+    const { game, path, puterUserId, characterName } = req.body;
+    
+    if (os.platform() !== 'win32') {
+      return res.json({ 
+        success: false, 
+        error: 'Game launching only supported on Windows' 
+      });
+    }
+
+    if (game === 'thoc') {
+      // If character specified, activate it first
+      if (puterUserId && characterName) {
+        await charManager.activateCharacter(puterUserId, characterName);
+      }
+      
+      // Launch THOC via Cactus
+      const cactusPath = path || 'C:\\Users\\nugye\\Documents\\Cactus\\Cactus\\thoc_b8_1';
+      
+      // Open the directory in explorer
+      await execAsync(`explorer "${cactusPath}"`);
+      
+      res.json({
+        success: true,
+        message: 'Opening THOC directory. Please launch via Cactus.',
+        character: characterName
+      });
+    } else {
+      res.json({
+        success: false,
+        error: 'Unknown game'
+      });
+    }
+  } catch (error) {
+    res.json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Puter Authentication
+app.post('/api/auth/puter', async (req, res) => {
+  try {
+    const { puterUserId, username } = req.body;
+    
+    if (!puterUserId) {
+      return res.status(400).json({ error: 'Puter user ID required' });
+    }
+    
+    // Initialize user if new
+    await charManager.initializeUser(puterUserId);
+    
+    res.json({
+      success: true,
+      userId: puterUserId,
+      username: username || 'Player'
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// List user's characters
+app.get('/api/characters/:puterUserId', async (req, res) => {
+  try {
+    const { puterUserId } = req.params;
+    const characters = await charManager.listCharacters(puterUserId);
+    
+    res.json({ characters });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Create new character
+app.post('/api/characters/create', async (req, res) => {
+  try {
+    const { puterUserId, characterName, className, isHardcore } = req.body;
+    
+    if (!puterUserId || !characterName || !className) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
+    // Check character limit (max 10 per user)
+    const count = await charManager.getCharacterCount(puterUserId);
+    if (count >= 10) {
+      return res.status(400).json({ error: 'Maximum 10 characters per user' });
+    }
+    
+    const character = await charManager.createCharacter(
+      puterUserId,
+      characterName,
+      className,
+      isHardcore || false
+    );
+    
+    res.json({ success: true, character });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Delete character
+app.delete('/api/characters/:puterUserId/:characterName', async (req, res) => {
+  try {
+    const { puterUserId, characterName } = req.params;
+    
+    await charManager.deleteCharacter(puterUserId, characterName);
+    
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Activate character for play
+app.post('/api/characters/activate', async (req, res) => {
+  try {
+    const { puterUserId, characterName } = req.body;
+    
+    const result = await charManager.activateCharacter(puterUserId, characterName);
+    
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Sync character back after playing
+app.post('/api/characters/sync', async (req, res) => {
+  try {
+    const { puterUserId, characterName } = req.body;
+    
+    const result = await charManager.syncCharacterBack(puterUserId, characterName);
+    
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // Game state
 const gameState = {

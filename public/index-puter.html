@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DiabloGrudge - Puter Edition</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <script src="https://js.puter.com/v2/"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a0505 100%);
+            font-family: 'Arial', sans-serif;
+            color: #d4af37;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            text-shadow: 0 0 20px #d4af37, 0 0 40px #8b0000;
+            margin: 20px 0;
+            letter-spacing: 3px;
+            text-align: center;
+        }
+
+        .user-info {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #d4af37;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1400px;
+            margin-top: 20px;
+        }
+
+        .panel {
+            background: rgba(26, 26, 26, 0.95);
+            border: 2px solid #d4af37;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 30px rgba(212, 175, 55, 0.3);
+        }
+
+        .panel-title {
+            font-size: 20px;
+            color: #d4af37;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+            border-bottom: 2px solid #d4af37;
+            padding-bottom: 10px;
+        }
+
+        .characters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .character-card {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d1a1a 100%);
+            border: 2px solid #d4af37;
+            border-radius: 8px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            position: relative;
+        }
+
+        .character-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 25px rgba(212, 175, 55, 0.6);
+            border-color: #ffd700;
+        }
+
+        .character-card.selected {
+            border-color: #00ff00;
+            box-shadow: 0 0 25px rgba(0, 255, 0, 0.6);
+        }
+
+        .character-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .character-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #d4af37;
+            margin-bottom: 5px;
+        }
+
+        .character-class {
+            font-size: 12px;
+            color: #8b7355;
+            margin-bottom: 8px;
+        }
+
+        .character-level {
+            font-size: 11px;
+            color: #7cfc00;
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #8b0000;
+            border: 1px solid #ff0000;
+            color: #ff6666;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 10px;
+            cursor: pointer;
+        }
+
+        .delete-btn:hover {
+            background: #ff0000;
+            color: #fff;
+        }
+
+        .create-character-card {
+            background: linear-gradient(135deg, #1a3a1a 0%, #0a2a0a 100%);
+            border: 2px dashed #00ff00;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3em;
+            color: #00ff00;
+        }
+
+        .create-character-card:hover {
+            background: linear-gradient(135deg, #2a4a2a 0%, #1a3a1a 100%);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1a1a1a;
+            border: 2px solid #d4af37;
+            border-radius: 8px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            color: #d4af37;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            color: #d4af37;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-input {
+            width: 100%;
+            background: #0a0a0a;
+            border: 2px solid #d4af37;
+            color: #d4af37;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .class-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .class-option {
+            background: #0a0a0a;
+            border: 2px solid #d4af37;
+            padding: 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .class-option:hover {
+            background: #2a2a2a;
+            transform: scale(1.05);
+        }
+
+        .class-option.selected {
+            border-color: #00ff00;
+            background: #1a3a1a;
+        }
+
+        .class-icon {
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+
+        .class-name {
+            font-size: 12px;
+            color: #d4af37;
+        }
+
+        .btn {
+            background: #8b0000;
+            color: #d4af37;
+            border: 2px solid #d4af37;
+            padding: 12px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s;
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover:not(:disabled) {
+            background: #d4af37;
+            color: #000;
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.6);
+            transform: scale(1.02);
+        }
+
+        .btn:disabled {
+            background: #4a4a4a;
+            color: #8b7355;
+            border-color: #8b7355;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .btn-secondary {
+            background: #1a1a1a;
+            margin-top: 10px;
+        }
+
+        .alert {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            font-size: 13px;
+        }
+
+        .alert.success {
+            background: rgba(0, 255, 0, 0.2);
+            border: 2px solid #00ff00;
+            color: #66ff66;
+        }
+
+        .alert.error {
+            background: rgba(255, 0, 0, 0.2);
+            border: 2px solid #ff0000;
+            color: #ff6666;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 18px;
+            color: #8b7355;
+        }
+
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>⚔️ DiabloGrudge - Puter Edition ⚔️</h1>
+
+    <div class="user-info" id="userInfo">
+        <div class="loading">Authenticating</div>
+    </div>
+
+    <div class="container">
+        <!-- Characters Panel -->
+        <div class="panel">
+            <div class="panel-title">
+                Your Characters
+            </div>
+            
+            <div id="charactersContainer">
+                <div class="loading">Loading characters</div>
+            </div>
+
+            <button class="btn" id="playBtn" disabled>
+                🎮 PLAY DIABLO II
+            </button>
+
+            <button class="btn btn-secondary" onclick="window.location.href='/'">
+                🌐 Open Web Lobby
+            </button>
+        </div>
+    </div>
+
+    <!-- Create Character Modal -->
+    <div class="modal" id="createModal">
+        <div class="modal-content">
+            <div class="modal-title">Create New Character</div>
+
+            <form id="createForm">
+                <div class="form-group">
+                    <label class="form-label">Character Name</label>
+                    <input type="text" id="charName" class="form-input" maxlength="15" placeholder="Enter name (max 15 chars)" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Choose Class</label>
+                    <div class="class-grid" id="classGrid">
+                        <div class="class-option" data-class="Amazon">
+                            <div class="class-icon">🏹</div>
+                            <div class="class-name">Amazon</div>
+                        </div>
+                        <div class="class-option" data-class="Sorceress">
+                            <div class="class-icon">🔮</div>
+                            <div class="class-name">Sorceress</div>
+                        </div>
+                        <div class="class-option" data-class="Necromancer">
+                            <div class="class-icon">💀</div>
+                            <div class="class-name">Necromancer</div>
+                        </div>
+                        <div class="class-option" data-class="Paladin">
+                            <div class="class-icon">🛡️</div>
+                            <div class="class-name">Paladin</div>
+                        </div>
+                        <div class="class-option" data-class="Barbarian">
+                            <div class="class-icon">⚔️</div>
+                            <div class="class-name">Barbarian</div>
+                        </div>
+                        <div class="class-option" data-class="Druid">
+                            <div class="class-icon">🌿</div>
+                            <div class="class-name">Druid</div>
+                        </div>
+                        <div class="class-option" data-class="Assassin">
+                            <div class="class-icon">🗡️</div>
+                            <div class="class-name">Assassin</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="isHardcore">
+                        <label class="form-label" for="isHardcore" style="margin: 0;">Hardcore (permanent death)</label>
+                    </div>
+                </div>
+
+                <div id="createError" class="alert error" style="display: none;"></div>
+
+                <button type="submit" class="btn">Create Character</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let currentUser = null;
+        let selectedCharacter = null;
+        let selectedClass = null;
+
+        // Initialize Puter and authenticate
+        async function initPuter() {
+            try {
+                // Check if running in Puter
+                if (typeof puter === 'undefined') {
+                    // Not in Puter - use guest mode
+                    currentUser = {
+                        id: 'guest_' + Math.random().toString(36).substr(2, 9),
+                        username: 'Guest User'
+                    };
+                } else {
+                    // Authenticate with Puter
+                    const user = await puter.auth.getUser();
+                    currentUser = {
+                        id: user.username || user.id,
+                        username: user.username || 'Puter User'
+                    };
+                }
+
+                // Authenticate with backend
+                const response = await fetch('/api/auth/puter', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        puterUserId: currentUser.id,
+                        username: currentUser.username
+                    })
+                });
+
+                if (response.ok) {
+                    updateUserInfo();
+                    await loadCharacters();
+                } else {
+                    showError('Authentication failed');
+                }
+            } catch (error) {
+                console.error('Puter init error:', error);
+                // Fallback to guest mode
+                currentUser = {
+                    id: 'guest_' + Date.now(),
+                    username: 'Guest User'
+                };
+                updateUserInfo();
+                await loadCharacters();
+            }
+        }
+
+        // Update user info display
+        function updateUserInfo() {
+            document.getElementById('userInfo').innerHTML = `
+                👤 ${currentUser.username}<br>
+                <span style="font-size: 10px; color: #8b7355;">ID: ${currentUser.id}</span>
+            `;
+        }
+
+        // Load user's characters
+        async function loadCharacters() {
+            try {
+                const response = await fetch(`/api/characters/${currentUser.id}`);
+                const data = await response.json();
+
+                const container = document.getElementById('charactersContainer');
+                container.innerHTML = '';
+
+                // Add create new character card
+                const createCard = document.createElement('div');
+                createCard.className = 'characters-grid';
+                
+                const createBtn = document.createElement('div');
+                createBtn.className = 'character-card create-character-card';
+                createBtn.innerHTML = '+';
+                createBtn.onclick = openCreateModal;
+                createCard.appendChild(createBtn);
+
+                // Add existing characters
+                const chars = data.characters || {};
+                Object.entries(chars).forEach(([name, char]) => {
+                    const card = createCharacterCard(name, char);
+                    createCard.appendChild(card);
+                });
+
+                container.appendChild(createCard);
+            } catch (error) {
+                console.error('Failed to load characters:', error);
+                showError('Failed to load characters');
+            }
+        }
+
+        // Create character card element
+        function createCharacterCard(name, char) {
+            const card = document.createElement('div');
+            card.className = 'character-card';
+            card.innerHTML = `
+                <button class="delete-btn" onclick="deleteCharacter('${name}', event)">✕</button>
+                <div class="character-icon">${char.icon}</div>
+                <div class="character-name">${name}</div>
+                <div class="character-class">${char.class}</div>
+                <div class="character-level">Level ${char.level}${char.hardcore ? ' 💀' : ''}</div>
+            `;
+            card.onclick = () => selectCharacter(name, char);
+            return card;
+        }
+
+        // Select character
+        function selectCharacter(name, char) {
+            selectedCharacter = { name, ...char };
+            
+            // Update UI
+            document.querySelectorAll('.character-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+            
+            document.getElementById('playBtn').disabled = false;
+        }
+
+        // Open create character modal
+        function openCreateModal() {
+            document.getElementById('createModal').classList.add('active');
+            document.getElementById('charName').value = '';
+            document.getElementById('isHardcore').checked = false;
+            document.getElementById('createError').style.display = 'none';
+            selectedClass = null;
+            document.querySelectorAll('.class-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('createModal').classList.remove('active');
+        }
+
+        // Class selection
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.class-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    document.querySelectorAll('.class-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    this.classList.add('selected');
+                    selectedClass = this.dataset.class;
+                });
+            });
+
+            // Create form submit
+            document.getElementById('createForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await createCharacter();
+            });
+
+            // Play button
+            document.getElementById('playBtn').addEventListener('click', async () => {
+                await playGame();
+            });
+        });
+
+        // Create character
+        async function createCharacter() {
+            const name = document.getElementById('charName').value.trim();
+            const isHardcore = document.getElementById('isHardcore').checked;
+            const errorDiv = document.getElementById('createError');
+
+            if (!name) {
+                errorDiv.textContent = 'Please enter a character name';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            if (!selectedClass) {
+                errorDiv.textContent = 'Please select a class';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/characters/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        puterUserId: currentUser.id,
+                        characterName: name,
+                        className: selectedClass,
+                        isHardcore
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    closeModal();
+                    await loadCharacters();
+                    showSuccess(`Character "${name}" created!`);
+                } else {
+                    errorDiv.textContent = data.error || 'Failed to create character';
+                    errorDiv.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Create error:', error);
+                errorDiv.textContent = 'Network error';
+                errorDiv.style.display = 'block';
+            }
+        }
+
+        // Delete character
+        async function deleteCharacter(name, event) {
+            event.stopPropagation();
+            
+            if (!confirm(`Delete character "${name}"? This cannot be undone.`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/characters/${currentUser.id}/${name}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    await loadCharacters();
+                    showSuccess(`Character "${name}" deleted`);
+                    if (selectedCharacter && selectedCharacter.name === name) {
+                        selectedCharacter = null;
+                        document.getElementById('playBtn').disabled = true;
+                    }
+                } else {
+                    showError('Failed to delete character');
+                }
+            } catch (error) {
+                console.error('Delete error:', error);
+                showError('Network error');
+            }
+        }
+
+        // Play game
+        async function playGame() {
+            if (!selectedCharacter) {
+                showError('Please select a character');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/launch-game', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        game: 'thoc',
+                        puterUserId: currentUser.id,
+                        characterName: selectedCharacter.name
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showSuccess(`Launching D2 with ${selectedCharacter.name}! 🎮`);
+                } else {
+                    showError(data.error || 'Failed to launch game');
+                }
+            } catch (error) {
+                console.error('Launch error:', error);
+                showError('Network error');
+            }
+        }
+
+        // Show success message
+        function showSuccess(message) {
+            const alert = document.createElement('div');
+            alert.className = 'alert success';
+            alert.textContent = message;
+            alert.style.position = 'fixed';
+            alert.style.top = '80px';
+            alert.style.right = '20px';
+            alert.style.zIndex = '10000';
+            document.body.appendChild(alert);
+
+            setTimeout(() => alert.remove(), 3000);
+        }
+
+        // Show error message
+        function showError(message) {
+            const alert = document.createElement('div');
+            alert.className = 'alert error';
+            alert.textContent = message;
+            alert.style.position = 'fixed';
+            alert.style.top = '80px';
+            alert.style.right = '20px';
+            alert.style.zIndex = '10000';
+            document.body.appendChild(alert);
+
+            setTimeout(() => alert.remove(), 3000);
+        }
+
+        // Initialize on load
+        initPuter();
+    </script>
+</body>
+</html>
